@@ -89,7 +89,7 @@ async function task_1_4(db) {
     SELECT 
         CustomerID AS 'Customer Id',
         COUNT(OrderID) AS 'Total number of Orders',
-        ROUND((COUNT(OrderID)/(SELECT COUNT(*) AS 'All' from orders)) * 100, 5) AS '% of all orders'
+        ROUND((COUNT(OrderID)/(SELECT COUNT(*) AS 'All' from Orders)) * 100, 5) AS '% of all orders'
         FROM Orders
     GROUP BY Orders.CustomerID
     ORDER BY \`% of all orders\` DESC, CustomerID
@@ -385,7 +385,7 @@ async function task_1_18(db) {
             COUNT(distinct OrderID) AS 'Total Number of Orders'
         FROM Orders
         WHERE YEAR(OrderDate) = 1998
-        GROUP BY DATE_FORMAT(OrderDate, '%Y-%m-%d')
+        GROUP BY DATE_FORMAT(\`OrderDate\`, '%Y-%m-%d')
 `);
 return result[0];
 }
@@ -403,10 +403,10 @@ async function task_1_19(db) {
         SELECT
             Orders.CustomerID,
             Customers.CompanyName,
-            SUM(Orderdetails.UnitPrice * Orderdetails.Quantity) AS 'TotalOrdersAmount, $'
+            SUM(OrderDetails.UnitPrice * OrderDetails.Quantity) AS 'TotalOrdersAmount, $'
         FROM Customers
         JOIN Orders ON Customers.CustomerID = Orders.CustomerID
-        JOIN Orderdetails ON Orders.OrderID = Orderdetails.OrderID
+        JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
         GROUP BY Customers.CustomerID
         HAVING \`TotalOrdersAmount, $\` > 10000
         ORDER BY \`TotalOrdersAmount, $\` DESC, CustomerID
@@ -427,10 +427,10 @@ async function task_1_20(db) {
         SELECT
             Employees.EmployeeID,
             CONCAT(FirstName, ' ', LastName) AS 'Employee Full Name',
-            SUM(Orderdetails.UnitPrice * Orderdetails.Quantity) AS 'Amount, $'
+            SUM(OrderDetails.UnitPrice * OrderDetails.Quantity) AS 'Amount, $'
         FROM Employees
         JOIN Orders ON Orders.EmployeeID = Employees.EmployeeID
-        JOIN Orderdetails ON Orders.OrderID = Orderdetails.OrderID
+        JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
         GROUP BY Employees.EmployeeID
         ORDER BY \`Amount, $\` DESC
         LIMIT 1
@@ -449,7 +449,7 @@ async function task_1_21(db) {
         SELECT
             OrderID,
             SUM(UnitPrice * Quantity) AS 'Maximum Purchase Amount, $'
-        FROM Orderdetails
+        FROM OrderDetails
         GROUP BY OrderID
         ORDER BY \`Maximum Purchase Amount, $\` DESC
         LIMIT 1
@@ -470,16 +470,16 @@ async function task_1_22(db) {
         SELECT DISTINCT
             Customers.CompanyName,
             Products.ProductName,
-            Orderdetails.UnitPrice AS 'PricePerItem'
+            OrderDetails.UnitPrice AS 'PricePerItem'
         FROM Customers
         JOIN Orders ON Orders.CustomerID = Customers.CustomerID
-        JOIN Orderdetails ON Orders.OrderID = Orderdetails.OrderID
-        JOIN Products ON Products.ProductID = Orderdetails.ProductID
-        WHERE Orderdetails.UnitPrice = (
+        JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+        JOIN Products ON Products.ProductID = OrderDetails.ProductID
+        WHERE OrderDetails.UnitPrice = (
             SELECT 
-                MAX(Orderdetails.UnitPrice) FROM Customers AS customers2
+                MAX(OrderDetails.UnitPrice) FROM Customers AS customers2
                 JOIN Orders ON Customers.CustomerID = Orders.CustomerID
-                JOIN Orderdetails ON Orders.OrderID = Orderdetails.OrderID
+                JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
                 WHERE customers2.CompanyName = Customers.CompanyName
         )
         ORDER BY \`PricePerItem\` DESC, CompanyName, ProductName
