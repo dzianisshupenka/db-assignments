@@ -385,7 +385,7 @@ async function task_1_18(db) {
             COUNT(distinct OrderID) AS 'Total Number of Orders'
         FROM Orders
         WHERE YEAR(OrderDate) = 1998
-        GROUP BY DATE_FORMAT(\`OrderDate\`, '%Y-%m-%d')
+        GROUP BY OrderDate
 `);
 return result[0];
 }
