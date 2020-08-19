@@ -18,6 +18,9 @@ async function before(db) {
     await db.collection('opportunities').createIndex({
         'initiativeId': 1
     });
+    await db.collection('clientCriteria').createIndex({
+        'value': 1
+    });
 }
 
 /**
@@ -150,9 +153,14 @@ async function task_3_1(db) {
                     ]
                 },
                 "contacts.questions.id" : 1,
-                "contacts.questions.answers" : 1,
+                "contacts.questions.answers.loopInstances.loop_instance" : 1,
+                "contacts.questions.answers.loopInstances.loop_text" : 1,
+                "contacts.questions.answers.loopInstances.is_selected" : 1,
+                "contacts.questions.answers.primary_answer_value":1,
+                "contacts.questions.answers.primary_answer_text":1,
                 "contacts.questions.category_id" : 1,
-                "contacts.win_vendor" : 1,
+                "contacts.win_vendor.value" : 1,
+                "contacts.win_vendor.name" : 1,
                 "clientWinner" : "$contacts.win_vendor.is_client",
             }
         },
