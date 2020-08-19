@@ -16,21 +16,7 @@ const ObjectId = require('mongodb').ObjectID;
  * */
 async function before(db) {
     await db.collection('opportunities').createIndex({
-        'initiativeId': 1,
-        'contacts.shortListedVendors.value': 1,
-        'contacts.shortListedVendors.is_selected': 1, 
-        'contacts.shortListedVendors.name': 1, 
-        'contacts.datePublished': 1,
-        'contacts.questions' : 1,
-        'contacts.questions.category_id': 1
-    });
-}
-
-async function before(db) {
-    await db.collection('clientCriteria').createIndex({
-        'value': 1, 
-        'versions': 1, 
-        'label': 1
+        'initiativeId': 1
     });
 }
 
