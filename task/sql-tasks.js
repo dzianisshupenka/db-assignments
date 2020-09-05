@@ -89,8 +89,8 @@ async function task_1_4(db) {
     SELECT 
         CustomerID AS 'Customer Id',
         COUNT(OrderID) AS 'Total number of Orders',
-        ROUND((COUNT(OrderID)/(SELECT COUNT(*) AS 'All' from Orders)) * 100, 5) AS '% of all orders'
-        FROM Orders
+        ROUND((COUNT(OrderID)/(SELECT COUNT(*) AS 'All' FROM Orders)) * 100, 5) AS '% of all orders'
+    FROM Orders
     GROUP BY Orders.CustomerID
     ORDER BY \`% of all orders\` DESC, CustomerID
 `);
@@ -133,8 +133,8 @@ async function task_1_6(db) {
         Products.ProductName,
         Categories.CategoryName,
         Suppliers.CompanyName AS 'SupplierCompanyName'
-    FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID
-    JOIN Suppliers ON Products.SupplierID = Suppliers.SupplierID
+    FROM Products INNER JOIN Categories ON Products.CategoryID = Categories.CategoryID
+    INNER JOIN Suppliers ON Products.SupplierID = Suppliers.SupplierID
     ORDER BY ProductName, \`SupplierCompanyName\`
 `);
 return result[0];
@@ -153,13 +153,13 @@ return result[0];
 async function task_1_7(db) {
     let result = await db.query(`
     SELECT 
-        subEmployeers.EmployeeID AS 'EmployeeId',
-        CONCAT(subEmployeers.FirstName, ' ', subEmployeers.LastName) AS 'FullName',
-        IF(subEmployeers.ReportsTo IS NULL, '-' , CONCAT(mainEmployeers.FirstName, ' ', mainEmployeers.LastName))  AS 'ReportsTo'
-    FROM Employees AS subEmployeers
-    LEFT JOIN Employees AS mainEmployeers
-    ON subEmployeers.ReportsTo = mainEmployeers.EmployeeID
-    ORDER BY subEmployeers.EmployeeID
+        subEmpl.EmployeeID AS 'EmployeeId',
+        CONCAT(subEmpl.FirstName, ' ', subEmpl.LastName) AS 'FullName',
+        IF(subEmpl.ReportsTo IS NULL, '-' , CONCAT(mainEmpl.FirstName, ' ', mainEmpl.LastName))  AS 'ReportsTo'
+    FROM Employees AS subEmpl
+    LEFT JOIN Employees AS mainEmpl
+    ON subEmpl.ReportsTo = mainEmpl.EmployeeID
+    ORDER BY subEmpl.EmployeeID
 `);
 return result[0];
 }
@@ -198,7 +198,7 @@ async function task_1_9(db) {
             CustomerID,
             ContactName
         FROM Customers
-        WHERE ContactName RLIKE "^F..n"
+        WHERE ContactName LIKE "F__n%"
 `);
 return result[0];
 }
@@ -275,9 +275,7 @@ async function task_1_13(db) {
     let result = await db.query(`
         SELECT
             (SELECT COUNT(*) FROM Products)  AS 'TotalOfCurrentProducts',
-            COUNT(Discontinued ) AS 'TotalOfDiscontinuedProducts'
-        FROM Products
-        where Discontinued = 1
+            (SELECT COUNT(*) FROM Products WHERE Discontinued = 1) AS 'TotalOfDiscontinuedProducts'
 `);
 return result[0];
 }
@@ -311,18 +309,18 @@ return result[0];
 async function task_1_15(db) {
     let result = await db.query(`
         SELECT
-            SUM(MONTH(OrderDate) = 1) AS 'January',
-            SUM(MONTH(OrderDate) = 2) AS 'February',
-            SUM(MONTH(OrderDate) = 3) AS 'March',
-            SUM(MONTH(OrderDate) = 4) AS 'April',
-            SUM(MONTH(OrderDate) = 5) AS 'May',
-            SUM(MONTH(OrderDate) = 6) AS 'June',
-            SUM(MONTH(OrderDate) = 7) AS 'July',
-            SUM(MONTH(OrderDate) = 8) AS 'August',
-            SUM(MONTH(OrderDate) = 9) AS 'September',
-            SUM(MONTH(OrderDate) = 10) AS 'October',
-            SUM(MONTH(OrderDate) = 11) AS 'November',
-            SUM(MONTH(OrderDate) = 12) AS 'December'
+            COUNT (CASE WHEN MONTH (OrderDate) = 1 THEN 1 END) AS 'January',
+            COUNT (CASE WHEN MONTH (OrderDate) = 2 THEN 1 END) AS 'February',
+            COUNT (CASE WHEN MONTH (OrderDate) = 3 THEN 1 END) AS 'March',
+            COUNT (CASE WHEN MONTH (OrderDate) = 4 THEN 1 END) AS 'April',
+            COUNT (CASE WHEN MONTH (OrderDate) = 5 THEN 1 END) AS 'May',
+            COUNT (CASE WHEN MONTH (OrderDate) = 6 THEN 1 END) AS 'June',
+            COUNT (CASE WHEN MONTH (OrderDate) = 7 THEN 1 END) AS 'July',
+            COUNT (CASE WHEN MONTH (OrderDate) = 8 THEN 1 END) AS 'August',
+            COUNT (CASE WHEN MONTH (OrderDate) = 9 THEN 1 END) AS 'September',
+            COUNT (CASE WHEN MONTH (OrderDate) = 10 THEN 1 END) AS 'October',
+            COUNT (CASE WHEN MONTH (OrderDate) = 11 THEN 1 END) AS 'November',
+            COUNT (CASE WHEN MONTH (OrderDate) = 12 THEN 1 END) AS 'December'
         FROM Orders
         WHERE YEAR(OrderDate) = 1997
 `);
@@ -429,8 +427,8 @@ async function task_1_20(db) {
             CONCAT(FirstName, ' ', LastName) AS 'Employee Full Name',
             SUM(OrderDetails.UnitPrice * OrderDetails.Quantity) AS 'Amount, $'
         FROM Employees
-        JOIN Orders ON Orders.EmployeeID = Employees.EmployeeID
-        JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+        INNER JOIN Orders ON Orders.EmployeeID = Employees.EmployeeID
+        INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
         GROUP BY Employees.EmployeeID
         ORDER BY \`Amount, $\` DESC
         LIMIT 1
@@ -472,17 +470,17 @@ async function task_1_22(db) {
             Products.ProductName,
             OrderDetails.UnitPrice AS 'PricePerItem'
         FROM Customers
-        JOIN Orders ON Orders.CustomerID = Customers.CustomerID
-        JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
-        JOIN Products ON Products.ProductID = OrderDetails.ProductID
+        INNER JOIN Orders ON Orders.CustomerID = Customers.CustomerID
+        INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+        INNER JOIN Products ON Products.ProductID = OrderDetails.ProductID
         WHERE OrderDetails.UnitPrice = (
             SELECT 
                 MAX(OrderDetails.UnitPrice) FROM Customers AS customers2
-                JOIN Orders ON Customers.CustomerID = Orders.CustomerID
-                JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
-                WHERE customers2.CompanyName = Customers.CompanyName
+                INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+                INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+                WHERE customers2.CustomerID = Customers.CustomerID
         )
-        ORDER BY \`PricePerItem\` DESC, CompanyName, ProductName
+        ORDER BY PricePerItem DESC, CompanyName, ProductName
 `);
 return result[0];
 }
