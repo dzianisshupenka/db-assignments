@@ -91,7 +91,7 @@ async function task_1_4(db) {
         COUNT(OrderID) AS 'Total number of Orders',
         ROUND((COUNT(OrderID)/(SELECT COUNT(*) AS 'All' FROM Orders)) * 100, 5) AS '% of all orders'
     FROM Orders
-    GROUP BY Orders.CustomerID
+    GROUP BY CustomerID
     ORDER BY \`% of all orders\` DESC, CustomerID
 `);
 return result[0];
@@ -468,18 +468,20 @@ async function task_1_22(db) {
         SELECT DISTINCT
             Customers.CompanyName,
             Products.ProductName,
-            OrderDetails.UnitPrice AS 'PricePerItem'
-        FROM Customers
-        INNER JOIN Orders ON Orders.CustomerID = Customers.CustomerID
-        INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
-        INNER JOIN Products ON Products.ProductID = OrderDetails.ProductID
-        WHERE OrderDetails.UnitPrice = (
-            SELECT 
-                MAX(OrderDetails.UnitPrice) FROM Customers AS customers2
-                INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
-                INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
-                WHERE customers2.CustomerID = Customers.CustomerID
-        )
+            MaxOrderPrices.UnitMaxPrice AS 'PricePerItem'
+        FROM (
+            SELECT
+                Customers.CustomerID AS CustomerID,
+                MAX(OrderDetails.UnitPrice) AS UnitMaxPrice
+            FROM Customers
+            INNER JOIN Orders ON Orders.CustomerID=Customers.CustomerID
+            INNER JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
+            GROUP BY Customers.CustomerID
+        ) MaxOrderPrices
+        INNER JOIN Orders ON Orders.CustomerID = MaxOrderPrices.CustomerID
+        INNER JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID AND MaxOrderPrices.UnitMaxPrice=OrderDetails.UnitPrice       
+        INNER JOIN Products ON Products.ProductID=OrderDetails.ProductID
+        INNER JOIN Customers ON MaxOrderPrices.CustomerID=Customers.CustomerID
         ORDER BY PricePerItem DESC, CompanyName, ProductName
 `);
 return result[0];
